@@ -11,18 +11,15 @@ SYSTEM = (
     "You are a software engineer. Fix the issue in the supplied repository context. "
     "Return only a unified git diff for source code. Do not edit tests."
 )
-DIFF_HEADER = re.compile(r"^diff --git a/(.+?) b/(.+)$")
+FILE_HEADER = re.compile(r"(?m)^--- a/(.+)\n\+\+\+ b/(.+)\n")
+HUNK_HEADER = re.compile(r"(?m)^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@")
 
 
 def patch_blocks(patch: str):
-    current = []
-    for line in patch.splitlines(keepends=True):
-        if line.startswith("diff --git ") and current:
-            yield "".join(current)
-            current = []
-        current.append(line)
-    if current:
-        yield "".join(current)
+    headers = list(FILE_HEADER.finditer(patch))
+    for index, header in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(patch)
+        yield header.group(2), patch[header.start():end]
 
 
 def is_test_or_config(path: str) -> bool:
@@ -38,30 +35,49 @@ def is_test_or_config(path: str) -> bool:
 
 def source_blocks(patch: str):
     result = []
-    for block in patch_blocks(patch):
-        first = block.splitlines()[0]
-        match = DIFF_HEADER.match(first)
-        if not match:
-            continue
-        path = match.group(2)
+    for path, block in patch_blocks(patch):
         if not path.endswith(".py") or is_test_or_config(path):
             continue
         result.append((path, block))
     return result
 
 
-def snapshot_text(archive: Path, wanted: list[str], max_file_bytes: int) -> dict[str, str]:
+def source_excerpt(body: str, patch: str, max_file_bytes: int) -> str:
+    if len(body.encode()) <= max_file_bytes:
+        return body
+    lines = body.splitlines(keepends=True)
+    starts = [int(match.group(1)) for match in HUNK_HEADER.finditer(patch)]
+    if not starts:
+        return body.encode()[:max_file_bytes].decode("utf-8", errors="ignore")
+    pieces = []
+    used = 0
+    for line_number in starts:
+        start = max(0, line_number - 21)
+        end = min(len(lines), line_number + 25)
+        piece = f"# Base lines {start + 1}-{end}\n" + "".join(lines[start:end])
+        encoded = piece.encode()
+        if used + len(encoded) > max_file_bytes:
+            break
+        pieces.append(piece)
+        used += len(encoded)
+    return "\n# ...\n".join(pieces)
+
+
+def snapshot_text(archive: Path, wanted: dict[str, str], max_file_bytes: int) -> dict[str, str]:
     found = {}
     with tarfile.open(archive, "r:gz") as tar:
-        members = [m for m in tar.getmembers() if m.isfile() and m.size <= max_file_bytes]
-        for path in wanted:
+        members = [m for m in tar.getmembers() if m.isfile() and m.size <= 1_000_000]
+        for path, patch in wanted.items():
             matches = [m for m in members if m.name == path or m.name.endswith("/" + path)]
             if not matches:
                 continue
             member = min(matches, key=lambda m: len(m.name))
             stream = tar.extractfile(member)
             if stream:
-                found[path] = stream.read(max_file_bytes + 1).decode("utf-8", errors="replace")
+                body = stream.read().decode("utf-8", errors="replace")
+                excerpt = source_excerpt(body, patch, max_file_bytes)
+                if excerpt:
+                    found[path] = excerpt
     return found
 
 
@@ -101,7 +117,9 @@ def main() -> None:
             skipped.append({"instance_id": instance_id, "reason": reason})
             continue
         paths = list(dict.fromkeys(path for path, _ in blocks))[: args.max_files]
-        context = snapshot_text(archive, paths, args.max_file_bytes)
+        wanted = {path: "".join(block for block_path, block in blocks if block_path == path)
+                  for path in paths}
+        context = snapshot_text(archive, wanted, args.max_file_bytes)
         if not context:
             skipped.append({"instance_id": instance_id, "reason": "no source context"})
             continue
