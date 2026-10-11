@@ -1,0 +1,10 @@
+.venv/
+data/
+artifacts/
+results/
+__pycache__/
+*.pyc
+outputs/
+work/
+submission/adapters/
+.DS_Store
