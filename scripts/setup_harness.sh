@@ -6,9 +6,9 @@ if [[ -z "$WHEELHOUSE" || ! -d "$WHEELHOUSE" ]]; then
   echo "Usage: scripts/setup_harness.sh /path/to/official-wheelhouse" >&2
   exit 2
 fi
-if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
-  uv venv --python 3.12 "$ROOT/.venv"
-fi
+WHEELHOUSE="$(cd "$WHEELHOUSE" && pwd)"
+cd "$ROOT"
+uv sync --locked --inexact
 WHEELS=()
 for package in swegemma adk_submission adk_eval_core google_adk; do
   WHEEL="$(find "$WHEELHOUSE" -name "${package}-*-py3-none-any.whl" -print -quit)"
@@ -20,7 +20,7 @@ for package in swegemma adk_submission adk_eval_core google_adk; do
 done
 # Install only the official pure-Python harness wheels from the organizer's
 # wheelhouse. PyPI supplies their ordinary dependencies on the desktop.
-uv pip install --python "$ROOT/.venv/bin/python" "${WHEELS[@]}" -r "$ROOT/requirements-dev.txt"
+uv pip install --python "$ROOT/.venv/bin/python" "${WHEELS[@]}"
 "$ROOT/.venv/bin/python" "$ROOT/scripts/check_project.py"
 "$ROOT/.venv/bin/swegemma" --help >/dev/null
 "$ROOT/.venv/bin/python" "$ROOT/scripts/validate_official.py" "$ROOT/submission"

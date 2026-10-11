@@ -10,7 +10,7 @@ def main() -> int:
     try:
         import yaml
     except ImportError:
-        print("PyYAML missing: install requirements-dev.txt", file=sys.stderr)
+        print("PyYAML missing: run uv sync --locked", file=sys.stderr)
         return 2
 
     submission = ROOT / "submission"

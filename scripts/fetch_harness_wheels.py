@@ -17,7 +17,7 @@ def main():
     args = parser.parse_args()
     kaggle = Path(sys.executable).with_name("kaggle")
     if not kaggle.is_file():
-        parser.error("Kaggle CLI missing; install requirements-dev.txt in this Python environment")
+        parser.error("Kaggle CLI missing; run uv sync --locked")
     result = subprocess.run(
         [str(kaggle), "datasets", "files", DATASET, "--csv", "--page-size", "200"],
         check=True,

@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
     kaggle = Path(sys.executable).with_name("kaggle")
     if not kaggle.is_file():
-        parser.error("Kaggle CLI missing; install requirements-dev.txt")
+        parser.error("Kaggle CLI missing; run uv sync --locked")
     files = ["HARNESS_README.md", "tasks.jsonl"]
     if args.task_id:
         if "/" in args.task_id or ".." in args.task_id:
