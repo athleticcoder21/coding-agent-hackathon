@@ -27,6 +27,8 @@ Run:
 
 The script uses only public development issues, reference source patches, and source files from the corresponding base snapshot. It excludes test patches and test files. It writes `train.jsonl`, `validation.jsonl`, and a skip manifest. The split is deterministic by instance ID. These 129 public cases are a small supervised starting point, so measure generalization on held-out cases.
 
+The downloaded public data currently yields 102 training examples and 21 validation examples; six tasks are skipped for missing base source context or oversized patches. With the cached Gemma tokenizer, 59 training and 12 validation examples fit the 2,048-token setting shown below. The training script reports its accepted counts before loading the model.
+
 ## Train on a CUDA host
 
 Run `uv sync --locked --extra train` on a CUDA host with a compatible PyTorch build. Attach or pre-download Google's `google/gemma-4-31B-it-qat-q4_0-unquantized` checkpoint, then run:
