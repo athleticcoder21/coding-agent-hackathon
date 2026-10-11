@@ -6,9 +6,14 @@ This folder contains a Kaggle submission skeleton, a supervised LoRA training re
 
 The local `.venv` contains the official `swegemma`, `adk-submission`, `adk-eval-core`, and Google ADK wheels when the organizer wheelhouse is available. On macOS it supports config checks and data preparation. This 16 GB Apple Silicon Mac cannot train or serve the 31B model or run the CUDA scoring path.
 
-1. Download the [organizer wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse) and extract it into `data/harness-wheels/`.
-2. Run `scripts/setup_harness.sh data/harness-wheels`.
-3. Run `.venv/bin/python scripts/check_project.py`.
+1. Run `uv venv --python 3.12 .venv` and `uv pip install --python .venv/bin/python -r requirements-dev.txt`.
+2. Run `.venv/bin/python scripts/fetch_harness_wheels.py` to download the four pure-Python wheels from the [organizer wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse).
+3. Run `scripts/setup_harness.sh data/harness-wheels`.
+4. Run `.venv/bin/python scripts/validate_official.py`.
+
+The local environment also includes the official Kaggle CLI for authenticated downloads after you accept the competition rules. Its credentials remain outside this project. The four pure-Python organizer wheels can be downloaded individually with the CLI; a bulk wheelhouse download is unnecessary on macOS.
+
+The official harness directory validator and compiler passed for the baseline agent on this Mac. After Kaggle authentication, a small desktop data download can start with `.venv/bin/kaggle competitions download -c gemma-4-developer-agent -f HARNESS_README.md -p data/competition` and the same command with `-f tasks.jsonl`. Download snapshots and the remaining data on a larger volume or CUDA host.
 
 The [competition files](https://www.kaggle.com/competitions/gemma-4-developer-agent/data) require Kaggle sign-in and acceptance of the competition rules. Download them into `data/competition/` so `tasks.jsonl`, `snapshots/`, and `HARNESS_README.md` sit directly there. Full Docker evaluation also needs its `docker/`, `sandbox/`, `graphs/`, `embeddings/`, and `wheels/` directories. Do not commit this data or credentials.
 

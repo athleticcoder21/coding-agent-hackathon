@@ -23,4 +23,5 @@ done
 uv pip install --python "$ROOT/.venv/bin/python" "${WHEELS[@]}" -r "$ROOT/requirements-dev.txt"
 "$ROOT/.venv/bin/python" "$ROOT/scripts/check_project.py"
 "$ROOT/.venv/bin/swegemma" --help >/dev/null
+"$ROOT/.venv/bin/python" "$ROOT/scripts/validate_official.py" "$ROOT/submission"
 echo "Official harness installed in $ROOT/.venv"

@@ -93,6 +93,7 @@ def main():
     import torch
     from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
     from transformers import (
+        AutoConfig,
         AutoModelForMultimodalLM,
         AutoProcessor,
         BitsAndBytesConfig,
@@ -103,6 +104,14 @@ def main():
 
     if not torch.cuda.is_available():
         raise SystemExit("This 31B training recipe requires an NVIDIA CUDA GPU")
+    config = AutoConfig.from_pretrained(args.model_id)
+    quant = getattr(config, "quantization_config", None)
+    quant_method = quant.get("quant_method") if isinstance(quant, dict) else None
+    if quant_method == "compressed-tensors":
+        raise SystemExit(
+            "W4A16 compressed tensors are a serving checkpoint. "
+            "Train on google/gemma-4-31B-it-qat-q4_0-unquantized instead."
+        )
     set_seed(args.seed)
     processor = AutoProcessor.from_pretrained(args.model_id)
     tokenizer = processor.tokenizer
@@ -128,8 +137,6 @@ def main():
         device_map="auto",
         low_cpu_mem_usage=True,
     )
-    if getattr(model.config, "quantization_config", None) and "w4a16" in args.model_id.lower():
-        raise RuntimeError("Use the unquantized QAT checkpoint for training, not W4A16 compressed tensors")
     model.config.use_cache = False
     model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
     lora = LoraConfig(
@@ -165,6 +172,7 @@ def main():
         seed=args.seed,
         remove_unused_columns=False,
         dataloader_num_workers=0,
+        label_names=["labels"],
     )
     trainer = Trainer(
         model=model,
