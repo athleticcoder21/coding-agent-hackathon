@@ -13,7 +13,7 @@ The local `.venv` contains the official `swegemma`, `adk-submission`, `adk-eval-
 
 The local environment also includes the official Kaggle CLI for authenticated downloads after you accept the competition rules. Its credentials remain outside this project. The four pure-Python organizer wheels can be downloaded individually with the CLI; a bulk wheelhouse download is unnecessary on macOS.
 
-The official harness directory validator and compiler passed for the baseline agent on this Mac. After Kaggle authentication, a small desktop data download can start with `.venv/bin/kaggle competitions download -c gemma-4-developer-agent -f HARNESS_README.md -p data/competition` and the same command with `-f tasks.jsonl`. Download snapshots and the remaining data on a larger volume or CUDA host.
+The official harness directory validator and compiler passed for the baseline agent on this Mac. After Kaggle authentication, run `.venv/bin/python scripts/fetch_competition_data.py` for the readme and task list, or add `--task-id INSTANCE_ID` to fetch one snapshot. Download the full snapshots and remaining data on a larger volume or CUDA host.
 
 The [competition files](https://www.kaggle.com/competitions/gemma-4-developer-agent/data) require Kaggle sign-in and acceptance of the competition rules. Download them into `data/competition/` so `tasks.jsonl`, `snapshots/`, and `HARNESS_README.md` sit directly there. Full Docker evaluation also needs its `docker/`, `sandbox/`, `graphs/`, `embeddings/`, and `wheels/` directories. Do not commit this data or credentials.
 
