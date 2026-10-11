@@ -12,6 +12,8 @@ The local `.venv` contains the official `swegemma`, `adk-submission`, `adk-eval-
 
 The [competition files](https://www.kaggle.com/competitions/gemma-4-developer-agent/data) require Kaggle sign-in and acceptance of the competition rules. Download them into `data/competition/` so `tasks.jsonl`, `snapshots/`, and `HARNESS_README.md` sit directly there. Full Docker evaluation also needs its `docker/`, `sandbox/`, `graphs/`, `embeddings/`, and `wheels/` directories. Do not commit this data or credentials.
 
+This Mac had about 28 GB free during setup, while Kaggle lists 22.42 GB of competition files. Download selected files here or use a larger volume/CUDA host for the full dataset to avoid filling the disk.
+
 ## Build training examples
 
 Run:
