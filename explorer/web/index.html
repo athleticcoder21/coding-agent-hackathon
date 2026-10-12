@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>Gemma 4 Data Atlas</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" role="banner">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <div><strong>Gemma 4</strong><small>DATA ATLAS</small></div>
+      </div>
+      <nav class="topnav" aria-label="Main views">
+        <button class="nav-button" data-view="overview">Overview</button>
+        <button class="nav-button active" data-view="explore">Explore</button>
+        <button class="nav-button" data-view="files">Dataset files</button>
+      </nav>
+      <div class="topbar-right"><span class="live-dot"></span><span>Local dataset</span><button id="mobileMenu" class="mobile-menu" aria-label="Toggle task list">☰</button></div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head"><span class="eyebrow">PUBLIC CASES</span><span id="caseCount" class="count-pill">…</span></div>
+      <label class="search-field"><span aria-hidden="true">⌕</span><input id="taskSearch" type="search" placeholder="Search issues, IDs, files" aria-label="Search tasks"></label>
+      <div id="repoFilters" class="repo-filters" aria-label="Filter repository"></div>
+      <div id="taskList" class="task-list" role="listbox" aria-label="Competition tasks"><div class="loading-state">Loading cases…</div></div>
+      <div class="sidebar-foot">A task links to its base snapshot, call graph, and 256-dimensional symbol vectors.</div>
+    </aside>
+
+    <main class="main-panel">
+      <section id="overviewView" class="view hidden" aria-labelledby="overviewTitle">
+        <div class="page-heading"><div><span class="eyebrow">DATASET OVERVIEW</span><h1 id="overviewTitle">A map of the competition</h1><p>Follow the relationships from an issue to the code it changes, the call graph around it, and nearby symbols in embedding space.</p></div></div>
+        <div id="overviewStats" class="stat-grid"></div>
+        <div class="overview-grid">
+          <article class="surface overview-card"><div class="section-heading"><span class="eyebrow">REPOSITORIES</span><h2>Cases by codebase</h2></div><div id="repoOverview"></div></article>
+          <article class="surface overview-card"><div class="section-heading"><span class="eyebrow">RELATIONSHIPS</span><h2>How the files connect</h2></div><div class="relationship-flow"><div><b>Issue</b><span>Problem and reference patch</span></div><i>→</i><div><b>Base commit</b><span>Exact repository state</span></div><i>→</i><div><b>Call graph</b><span>Functions, classes, calls</span></div><i>→</i><div><b>Embeddings</b><span>Vector similarity by symbol</span></div></div><p class="muted">Two pairs of cases share a base commit, so 129 tasks map to 127 graph and embedding pairs.</p></article>
+          <article class="surface overview-card wide"><div class="section-heading"><span class="eyebrow">SHIPPED ASSETS</span><h2>What is on disk</h2></div><div id="assetOverview" class="asset-overview"></div></article>
+        </div>
+      </section>
+
+      <section id="exploreView" class="view" aria-labelledby="exploreTitle">
+        <div class="task-header surface">
+          <div class="task-header-top"><div><span id="taskRepo" class="eyebrow">LOADING TASK</span><h1 id="exploreTitle">Choose a case</h1><div id="taskMeta" class="task-meta"></div></div><span id="taskIdBadge" class="id-badge"></span></div>
+          <p id="taskPreview" class="task-preview"></p>
+          <div id="changedFiles" class="changed-files"></div>
+          <div class="task-actions"><button id="readIssue" class="text-button">Read issue and patches <span>↗</span></button><span id="artifactFacts" class="artifact-facts"></span></div>
+        </div>
+
+        <div class="workspace-grid">
+          <div class="workspace-main">
+            <div class="section-toolbar"><div><span class="eyebrow">CODE INTELLIGENCE</span><h2 id="workspaceTitle">Call graph</h2></div><div class="mode-switch" role="tablist" aria-label="Artifact view"><button class="mode-button active" data-mode="graph">Call graph</button><button class="mode-button" data-mode="embedding">Embeddings</button><button class="mode-button" data-mode="snapshot">Snapshot</button></div></div>
+            <div id="graphControls" class="graph-controls"><label class="search-field symbol-search"><span aria-hidden="true">⌕</span><input id="symbolSearch" type="search" placeholder="Find a function or class" aria-label="Search graph symbols"></label><select id="depthSelect" aria-label="Graph depth"><option value="1">1 hop</option><option value="2">2 hops</option></select><button id="resetGraph" class="small-button">Reset</button></div>
+            <div id="symbolResults" class="symbol-results hidden"></div>
+            <div id="graphPanel" class="viz-panel surface"><div id="graphLoading" class="loading-state">Choose a case to load its call graph.</div><svg id="graphSvg" class="graph-svg" viewBox="-550 -340 1100 680" role="img" aria-label="Call graph neighborhood"></svg><div class="viz-legend"><span><i class="legend-dot center"></i> Focus</span><span><i class="legend-dot caller"></i> Calls it</span><span><i class="legend-dot callee"></i> Called by it</span><span><i class="legend-dot second"></i> 2 hops</span></div><div class="viz-caption" id="graphCaption"></div></div>
+            <div id="embeddingPanel" class="viz-panel surface hidden"><div class="embedding-intro"><div><strong id="embeddingTitle">Semantic neighbors</strong><p>Each point is a symbol vector. Distance in this 2D projection is approximate; the ranked list uses cosine similarity in all 256 dimensions.</p></div><span class="dimension-badge">256D → 2D</span></div><svg id="embeddingSvg" class="embedding-svg" viewBox="0 0 780 430" role="img" aria-label="Projection of nearest symbol embeddings"></svg><div id="embeddingList" class="embedding-list"></div></div>
+            <div id="snapshotPanel" class="viz-panel surface hidden"><div class="snapshot-head"><div><strong>Base repository snapshot</strong><p>Browse the exact code state used for this task. Git internals are hidden.</p></div><label class="search-field"><span>⌕</span><input id="snapshotSearch" type="search" placeholder="Filter snapshot paths" aria-label="Filter snapshot paths"></label></div><div id="snapshotResults" class="snapshot-results"></div></div>
+          </div>
+          <aside class="inspector surface" aria-label="Selected artifact details"><div class="inspector-head"><span class="eyebrow">INSPECTOR</span><h2 id="inspectorTitle">Select a symbol</h2><p id="inspectorSubtitle">Click a node to inspect its source and connections.</p></div><div id="inspectorContent" class="inspector-content"></div></aside>
+        </div>
+      </section>
+
+      <section id="filesView" class="view hidden" aria-labelledby="filesTitle"><div class="page-heading"><div><span class="eyebrow">ON-DISK INVENTORY</span><h1 id="filesTitle">Every shipped file</h1><p>Inspect harness assets, graph and embedding archives, wheels, and snapshots. Select a task for detailed graph or snapshot exploration.</p></div></div><div class="files-toolbar surface"><label class="search-field"><span>⌕</span><input id="fileSearch" type="search" placeholder="Search file names" aria-label="Search dataset files"></label><select id="fileKind" aria-label="File group"><option value="all">All groups</option></select><span id="fileCount" class="muted"></span></div><div class="files-grid"><div id="fileList" class="file-list surface"></div><div class="file-preview surface"><span class="eyebrow">FILE PREVIEW</span><h2 id="filePreviewTitle">Select a file</h2><div id="filePreviewBody" class="file-preview-body muted">Text assets can be read here. Graphs and embeddings link back to their task views.</div></div></div></section>
+    </main>
+  </div>
+
+  <dialog id="taskDialog" class="task-dialog"><div class="dialog-head"><div><span class="eyebrow">TASK DETAILS</span><h2 id="dialogTitle"></h2></div><button id="closeDialog" class="icon-button" aria-label="Close">×</button></div><div class="dialog-tabs"><button class="dialog-tab active" data-detail="issue">Issue</button><button class="dialog-tab" data-detail="patch">Reference patch</button><button class="dialog-tab" data-detail="test">Test patch</button></div><pre id="dialogBody"></pre></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

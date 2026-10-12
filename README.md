@@ -19,6 +19,18 @@ The [competition files](https://www.kaggle.com/competitions/gemma-4-developer-ag
 
 For CLI sign-in, run `uv run --locked kaggle auth login`. The OAuth flow keeps credentials outside this project. Check free disk space before downloading the full dataset and extracting its archive.
 
+## Explore the complete dataset locally
+
+The Gemma 4 Data Atlas is a read-only web app for the downloaded competition files. From this Desktop folder, run:
+
+    uv run --locked --extra explorer python scripts/run_explorer.py
+
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The server binds only to your computer. Use `--port` for a different port or `--data-dir` to point it at another extracted competition directory. Stop it with Ctrl-C.
+
+The **Overview** shows counts across all tasks, repository states, call graph nodes, and embedding vectors. **Explore** connects each issue to its base commit, changed files, source symbols, incoming/outgoing call graph links, nearest cosine-similar 256-dimensional embeddings, and files from the base repository snapshot. The two-dimensional embedding plot is a local PCA projection; cosine scores are computed from the original vectors. **Dataset files** lists every downloaded graph, embedding, snapshot, wheel, Docker and sandbox asset, guide, and sample submission file. Selecting a graph or embedding archive shows its counts and related tasks. Text files and wheel metadata can be previewed in the browser.
+
+The app builds a compact index at `data/explorer/index.json` on first launch, then reads graph, embedding, and snapshot contents on demand. It does not copy or upload the dataset. Graph neighborhoods are capped at 75 symbols in the UI, and text previews at 250 KB; search can reach the remaining symbols and files.
+
 ## Build training examples
 
 Run:
